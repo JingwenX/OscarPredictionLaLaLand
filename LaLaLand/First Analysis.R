@@ -1,0 +1,49 @@
+oscar <- read.csv("oscar.csv")
+df <- subset(oscar, select = -c(X, X.1, X.2) )
+
+# histogram
+summary(df)
+# cannot directly use change to numeric, b/c the "()" the resulting number would be weird
+# df$Awards <-as.numeric(df$Awards)
+# df$Nominations <- as.numeric(df$Nominations)
+# View(df)
+# hist(df$Awards, df$Nominations)
+
+# regex tryout
+# 1. remove the " ( )"
+# a <- c("0 (1)", "11 (4)")
+#a <- gsub("[] [!#$%()*,.:;<=>@^_`|~.{}].*[!#$%()*,.:;<=>@^_`|~.{}]", "", a)
+# 2. remove the "[ ]"
+# b <- c("10", "10[11]")
+# b <- gsub("\\[.*\\]", "", b)
+
+
+# delete the honoured awards, keep only the competitive awards
+# honoured awards are in brackets
+df$Awards <- gsub("[] [!#$%()*,.:;<=>@^_`|~.{}].*[!#$%()*,.:;<=>@^_`|~.{}]", "", df$Awards)
+df$Nominations <- gsub("[] [!#$%()*,.:;<=>@^_`|~.{}].*[!#$%()*,.:;<=>@^_`|~.{}]", "", df$Nominations )
+df$Nominations <- gsub("\\[.*\\]", "", df$Nominations)
+
+# change to numeric
+df$Awards <-as.numeric(df$Awards)
+df$Nominations <- as.numeric(df$Nominations)
+
+# remove the head of the long tail
+df_nozero <- df[df$Awards != 0,]
+# check plots again
+table(df_nozero$Awards, df_nozero$Nominations)
+
+# remove the head of the long tail
+df_noone <- df_nozero[df_nozero$Awards != 1,]
+# check plots again
+table(df_noone$Awards, df_noone$Nominations)
+
+fit1 <- glm(df_noone$Awards ~df_noone$Nominations, family = gaussian, data = df_noone)
+awards_with_14_nomination  = 0.52549+14*0.398
+# After my first analysis with linear regression, the predicted awards for La La Land (2016) 
+# who has 14 nominations, is predicted to have around 6 awards:)
+
+fit2 <- glm(df$Awards ~df$Nominations, family = gaussian, data = df)
+summary(fit2)
+awards_with_14_nomination = 0.439556 + 0.318306*14
+# This is a model with all history (including zeros and ones)
